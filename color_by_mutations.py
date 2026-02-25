@@ -91,7 +91,7 @@ def getBlosum90ColorName(aa1, aa2, similar_color=similar_color, different_color=
     col_name = '0x%02x%02x%02x' % tuple(int(b * 0xFF) for b in bcolor)
     return col_name
 
-def color_by_mutation(obj1, obj2, waters=False, labels=False, lines=False, sticks=False, chains1=None, chains2="A"):
+def color_by_mutation(obj1, obj2, waters=False, labels=False, lines=False, sticks=False, chains1=None, chains2="A", verbosity=1):
     '''
     DESCRIPTION
     
@@ -118,6 +118,9 @@ def color_by_mutation(obj1, obj2, waters=False, labels=False, lines=False, stick
         labels: bool (0 or 1). If 1, the possibly mutated sidechains are 
                 labeled by their chain, name and id
                 default = 0
+        
+        verbosity: int (0 or 1). If 0, only errors are printed. If 1, a summary of the results is printed.
+                default = 1
         
     EXAMPLE
         
@@ -239,13 +242,14 @@ def color_by_mutation(obj1, obj2, waters=False, labels=False, lines=False, stick
     if not sticks:
         cmd.hide("sticks", "%s"%obj1 + ("" if chains1 is None else " and chain %s" % chains1))
         cmd.hide("sticks", "%s"%obj2 + ("" if chains2 is None else " and chain %s" % chains2))
-    print('''
-             All mutated sidechains of %s are colored %s, the corresponding ones from %s are
-             colored on a spectrum from blue to red according to how similar the two amino acids are
-             (as measured by the BLOSUM90 substitution matrix).
-             Aligned regions without mutations are colored %s.
-             Regions not used for the alignment are %s.
-             NOTE: There could be mutations in the %s regions that were not detected.'''%(obj1, mutation_site_color, obj2, match_color, unaligned_color, unaligned_color))
+    if verbosity >= 1:
+        print('''
+                All mutated sidechains of %s are colored %s, the corresponding ones from %s are
+                colored on a spectrum from blue to red according to how similar the two amino acids are
+                (as measured by the BLOSUM90 substitution matrix).
+                Aligned regions without mutations are colored %s.
+                Regions not used for the alignment are %s.
+                NOTE: There could be mutations in the %s regions that were not detected.'''%(obj1, mutation_site_color, obj2, match_color, unaligned_color, unaligned_color))
     cmd.delete(aln)
     cmd.deselect()
 
