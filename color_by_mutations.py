@@ -59,17 +59,15 @@ mutation_site_color = "red"
 obj1_scheme = "blosum"
 obj2_scheme = "blosum"
 
-def getBlosum90ColorName(aa1, aa2, similar_color=similar_color, different_color=different_color):
-    '''returns an rgb color name of a color that represents the similarity of the two residues according to
-       the BLOSUM90 matrix. the color is on a spectrum from `similar_color` to `different_color`,
-       where `similar_color` is very similar, and `different_color` very disimilar.'''
+def getBlosum90ColorTuple(aa1, aa2, similar_color, different_color):
+    # if the two are the same, return blue
+    if aa1 == aa2:
+        return similar_color
+
     # return red for residues that are not part of the 20 amino acids
     if aa1 not in aa_3l or aa2 not in aa_3l:
         return different_color
 
-    # if the two are the same, return blue
-    if aa1 == aa2:
-        return similar_color
     i1 = aa_3l[aa1]
     i2 = aa_3l[aa2]
     b = blosum90[i1][i2]
@@ -83,6 +81,13 @@ def getBlosum90ColorName(aa1, aa2, similar_color=similar_color, different_color=
     # colvec = [similar_color, different_color]
     # bcolor = (1.-b, 0., b)
     bcolor = tuple(b*x + (1.-b)*y for x,y in zip(similar_color, different_color))
+    return bcolor
+
+def getBlosum90ColorName(aa1, aa2, similar_color=similar_color, different_color=different_color):
+    '''returns an rgb color name of a color that represents the similarity of the two residues according to
+       the BLOSUM90 matrix. the color is on a spectrum from `similar_color` to `different_color`,
+       where `similar_color` is very similar, and `different_color` very disimilar.'''
+    bcolor = getBlosum90ColorTuple(aa1, aa2, similar_color=similar_color, different_color=different_color)
     col_name = '0x%02x%02x%02x' % tuple(int(b * 0xFF) for b in bcolor)
     return col_name
 
@@ -183,9 +188,9 @@ def color_by_mutation(obj1, obj2, waters=False, labels=False, lines=False, stick
         else:
             mutant_selection += '((%s and resi %s and chain %s) or (%s and resi %s and chain %s)) or '%(obj1, i1, c1, obj2, i2, c2 )
             # get the similarity (according to the blosum matrix) of the two residues and
-            c = getBlosum90ColorName(n1, n2)
-            colors_obj1.append((c, '%s and resi %s and chain %s and elem C'%(obj1, i1, c1)))
-            colors_obj2.append((c, '%s and resi %s and chain %s and elem C'%(obj2, i2, c2)))
+            color = getBlosum90ColorName(n1, n2)
+            colors_obj1.append((color, '%s and resi %s and chain %s and elem C'%(obj1, i1, c1)))
+            colors_obj2.append((color, '%s and resi %s and chain %s and elem C'%(obj2, i2, c2)))
 
     if mutant_selection == '':
         raise CmdException('No mutations found')
@@ -235,7 +240,6 @@ def color_by_mutation(obj1, obj2, waters=False, labels=False, lines=False, stick
         cmd.hide("sticks", "%s"%obj1 + ("" if chains1 is None else " and chain %s" % chains1))
         cmd.hide("sticks", "%s"%obj2 + ("" if chains2 is None else " and chain %s" % chains2))
     print('''
-             Mutations are highlighted in blue and red.
              All mutated sidechains of %s are colored %s, the corresponding ones from %s are
              colored on a spectrum from blue to red according to how similar the two amino acids are
              (as measured by the BLOSUM90 substitution matrix).
